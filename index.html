@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgasobanuyeWatchNext</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#101114;color:white;
+  font-family:Arial,sans-serif;
+}
+header{
+  background:#191a20;padding:18px 5%;
+  display:flex;justify-content:space-between;
+  align-items:center;gap:15px;flex-wrap:wrap;
+  border-bottom:1px solid #303039;
+}
+.logo{font-size:23px;font-weight:bold;color:#ff414b}
+nav{display:flex;gap:18px;flex-wrap:wrap}
+nav a{color:white;text-decoration:none;font-size:14px}
+nav a:hover{color:#ff414b}
+.hero{
+  padding:65px 6%;
+  background:linear-gradient(110deg,#250d13,#171820);
+}
+.hero h1{font-size:36px;margin-bottom:12px}
+.hero p{color:#ccc;margin-bottom:20px}
+.search{
+  width:100%;max-width:550px;padding:14px;
+  border-radius:7px;border:1px solid #444;
+  background:#25262c;color:white;outline:none;
+}
+.filters{padding:20px 5%;display:flex;gap:10px;flex-wrap:wrap}
+.filters button{
+  padding:10px 17px;background:#24252b;
+  border:1px solid #444;color:white;
+  border-radius:20px;cursor:pointer;
+}
+.filters button.active,.filters button:hover{
+  background:#ed3947;border-color:#ed3947;
+}
+.section{padding:25px 5%}
+.section h2{margin-bottom:20px}
+.movies{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(155px,1fr));
+  gap:18px;
+}
+.card{
+  background:#1d1e24;border-radius:9px;
+  overflow:hidden;transition:.2s;
+}
+.card:hover{transform:translateY(-4px)}
+.card img{
+  width:100%;height:225px;
+  object-fit:cover;background:#333;
+}
+.card-info{padding:12px}
+.card h3{font-size:15px;margin-bottom:7px}
+.card p{font-size:12px;color:#aaa;margin-bottom:10px}
+.card a{
+  display:inline-block;background:#e83b49;
+  padding:8px 12px;color:white;
+  border-radius:5px;text-decoration:none;font-size:12px;
+}
+.status{color:#aaa;font-size:13px;margin-bottom:15px}
+footer{
+  margin-top:40px;padding:30px 5%;
+  text-align:center;background:#191a20;color:#aaa;
+}
+footer a{color:#ff4852}
+@media(max-width:600px){
+  .hero h1{font-size:27px}
+  header{justify-content:center}
+  nav{justify-content:center}
+  .movies{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">AgasobanuyeWatchNext</div>
+  <nav>
+    <a href="#">Home</a>
+    <a href="#movies">Movies</a>
+    <a href="#series">Series</a>
+    <a href="#about">About</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <h1>Discover Your Next Movie</h1>
+  <p>Explore movies and series in one place.</p>
+  <input id="search" class="search"
+    placeholder="Search movie or series...">
+</section>
+
+<div class="filters">
+  <button class="active" data-filter="All">All</button>
+  <button data-filter="Movie">Movies</button>
+  <button data-filter="Series">Series</button>
+  <button data-filter="Action">Action</button>
+  <button data-filter="Drama">Drama</button>
+</div>
+
+<section class="section" id="movies">
+  <h2>Latest Movies & Series</h2>
+  <p class="status" id="status">
+    Loading catalogue...
+  </p>
+  <div class="movies" id="movieList"></div>
+</section>
+
+<footer id="about">
+  <h3>AgasobanuyeWatchNext</h3>
+  <p>Discover movies and series.</p>
+  <p>
+    Movie information and authorized links.
+  </p>
+  <p>
+    <a href="https://agasobanuyenow.com/movies"
+       target="_blank" rel="noopener">
+       Visit AgasobanuyeNow
+    </a>
+  </p>
+  <br>
+  <p>© 2026 AgasobanuyeWatchNext</p>
+</footer>
+
+<script>
+// Configure this endpoint when an authorized
+// movie JSON API/feed is available.
+const MOVIE_API = "/api/movies";
+
+const SOURCE = "https://agasobanuyenow.com/movies";
+
+let movies = [];
+let activeFilter = "All";
+
+const list = document.getElementById("movieList");
+const statusText = document.getElementById("status");
+const search = document.getElementById("search");
+
+function renderMovies(){
+  const query = search.value.toLowerCase();
+
+  const filtered = movies.filter(movie => {
+    const matchesSearch =
+      (movie.title || "").toLowerCase().includes(query);
+
+    const matchesFilter =
+      activeFilter === "All" ||
+      movie.type === activeFilter ||
+      movie.category === activeFilter;
+
+    return matchesSearch && matchesFilter;
+  });
+
+  list.innerHTML = "";
+
+  if(!filtered.length){
+    list.textContent = "No matching movies found.";
+    return;
+  }
+
+  filtered.forEach(movie => {
+    const card = document.createElement("article");
+    card.className = "card";
+
+    const image = document.createElement("img");
+    image.src = movie.poster ||
+      "https://placehold.co/300x450/222/fff?text=Movie";
+    image.alt = movie.title || "Movie poster";
+    image.loading = "lazy";
+
+    image.onerror = () => {
+      image.src =
+        "https://placehold.co/300x450/222/fff?text=Movie";
+    };
+
+    const info = document.createElement("div");
+    info.className = "card-info";
+
+    const title = document.createElement("h3");
+    title.textContent = movie.title || "Untitled";
+
+    const details = document.createElement("p");
+    details.textContent =
+      [movie.year, movie.category, movie.type]
+      .filter(Boolean).join(" • ");
+
+    const link = document.createElement("a");
+    link.textContent = "More information";
+    link.href = movie.url || SOURCE;
+
+    // Only allow links to trusted HTTPS destinations.
+    try {
+      const destination = new URL(link.href);
+      if(destination.protocol !== "https:"){
+        link.href = SOURCE;
+      }
+    } catch {
+      link.href = SOURCE;
+    }
+
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
+    info.append(title, details, link);
+    card.append(image, info);
+    list.append(card);
+  });
+}
+
+async function loadMovies(){
+  statusText.textContent = "Checking for new movies...";
+
+  try {
+    const response = await fetch(MOVIE_API, {
+      headers: {"Accept":"application/json"},
+      cache: "no-store"
+    });
+
+    if(!response.ok){
+      throw new Error("Movie feed unavailable");
+    }
+
+    const data = await response.json();
+
+    movies = Array.isArray(data)
+      ? data
+      : data.movies || [];
+
+    statusText.textContent =
+      movies.length + " movies and series available.";
+
+    renderMovies();
+
+  } catch(error) {
+    statusText.textContent =
+      "Movie feed is not connected yet. Please configure an authorized API.";
+    console.error(error);
+  }
+}
+
+search.addEventListener("input", renderMovies);
+
+document.querySelectorAll(".filters button")
+.forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".filters button")
+      .forEach(b => b.classList.remove("active"));
+
+    button.classList.add("active");
+    activeFilter = button.dataset.filter;
+    renderMovies();
+  });
+});
+
+// Refresh catalogue every five minutes.
+loadMovies();
+setInterval(loadMovies, 300000);
+</script>
+
+</body>
+</html>
